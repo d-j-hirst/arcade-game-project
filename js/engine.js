@@ -13,6 +13,9 @@
  * writing app.js a little simpler to work with.
  */
 
+const BLOCK_WIDTH = 101;
+const BLOCK_HEIGHT = 83;
+
 var Engine = (function(global) {
     /* Predefine the variables we'll be using within this scope,
      * create the canvas element, grab the 2D context for that canvas
@@ -90,10 +93,8 @@ var Engine = (function(global) {
      * render methods.
      */
     function updateEntities(dt) {
-        allEnemies.forEach(function(enemy) {
-            enemy.update(dt);
-        });
-        player.update();
+        entities.enemies.forEach(enemy => enemy.update(dt));
+        entities.player.update();
     }
 
     /* This function initially draws the "game level", it will then call
@@ -134,7 +135,7 @@ var Engine = (function(global) {
                  * so that we get the benefits of caching these images, since
                  * we're using them over and over.
                  */
-                ctx.drawImage(Resources.get(rowImages[row]), col * 101, row * 83);
+                ctx.drawImage(Resources.get(rowImages[row]), col * BLOCK_WIDTH, row * BLOCK_HEIGHT);
             }
         }
 
@@ -149,11 +150,9 @@ var Engine = (function(global) {
         /* Loop through all of the objects within the allEnemies array and call
          * the render function you have defined.
          */
-        allEnemies.forEach(function(enemy) {
-            enemy.render();
-        });
+        entities.enemies.forEach(enemy => enemy.render());
 
-        player.render();
+        entities.player.render();
     }
 
     /* This function does nothing but it could have been a good place to

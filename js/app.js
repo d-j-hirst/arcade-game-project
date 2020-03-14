@@ -1,36 +1,59 @@
-// Enemies our player must avoid
-var Enemy = function() {
-    // Variables applied to each of our instances go here,
-    // we've provided one for you to get started
 
-    // The image/sprite for our enemies, this uses
-    // a helper we've provided to easily load images
-    this.sprite = 'images/enemy-bug.png';
-};
+// Base class for any object (including enemies, player(s), other interactives)
+// that are drawn onto a position on the screen
+class Entity {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.sprite = '';
+    }
 
-// Update the enemy's position, required method for game
-// Parameter: dt, a time delta between ticks
-Enemy.prototype.update = function(dt) {
-    // You should multiply any movement by the dt parameter
-    // which will ensure the game runs at the same speed for
-    // all computers.
-};
+    // Moves an entity by a velocity given by x and y (in pixels/s)
+    // multiplied by the time variable dt
+    shiftPosition(x, y, dt) {
+        this.x += x * dt;
+        this.y += y * dt;
+    }
 
-// Draw the enemy on the screen, required method for game
-Enemy.prototype.render = function() {
-    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-};
+    // In order for this function to work a subclass must
+    // set the "sprite" property to a string containing a valid image file name
+    render() {
+        if (this.sprite) {
+            ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+        }
+    }
 
-// Now write your own player class
-// This class requires an update(), render() and
-// a handleInput() method.
+    update() {};
+}
 
+class Enemy extends Entity {
+    constructor(x, y) {
+        super(x, y);
+        this.sprite = 'images/enemy-bug.png';
+    }
+}
+
+class Player extends Entity {
+    constructor(x, y) {
+        super(x, y);
+        this.sprite = 'images/char-boy.png'
+    }
+
+    handleInput(keys) {}
+}
+
+class Entities {
+    constructor() {
+        this.enemies = [];
+        this.player = new Player(200, 200);
+    }
+}
+
+const entities = new Entities();
 
 // Now instantiate your objects.
 // Place all enemy objects in an array called allEnemies
 // Place the player object in a variable called player
-
-
 
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method. You don't need to modify this.
