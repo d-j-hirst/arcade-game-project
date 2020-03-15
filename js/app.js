@@ -1,4 +1,33 @@
 
+class InputHandler {
+    constructor() {
+        this.allowedKeys = {
+            37: 'left',
+            38: 'up',
+            39: 'right',
+            40: 'down'
+        };
+        this.pressedKeys = [];
+        this.initializeEventListeners();
+    }
+
+    initializeEventListeners() {
+        document.addEventListener('keydown', e => {
+            const keyValue = this.allowedKeys[e.keyCode];
+            if (!this.pressedKeys.includes(keyValue)) this.pressedKeys.push(keyValue);
+        });
+        document.addEventListener('keyup', e => {
+            const keyValue = this.allowedKeys[e.keyCode];
+            const keyIndex = this.pressedKeys.indexOf(keyValue);
+            if (keyIndex !== -1) this.pressedKeys.splice(keyIndex, 1);
+        });
+    }
+
+    isPressed(keyValue) {
+        return this.pressedKeys.includes(keyValue);
+    }
+}
+
 // Base class for any object (including enemies, player(s), other interactives)
 // that are drawn onto a position on the screen
 class Entity {
@@ -23,7 +52,7 @@ class Entity {
         }
     }
 
-    update() {};
+    update(dt) {};
 }
 
 class Enemy extends Entity {
@@ -34,36 +63,40 @@ class Enemy extends Entity {
 }
 
 class Player extends Entity {
-    constructor(x, y) {
+    constructor(x, y, inputs) {
         super(x, y);
-        this.sprite = 'images/char-boy.png'
+        this.sprite = 'images/char-boy.png';
+        this.inputs = inputs;
     }
 
-    handleInput(keys) {}
+    handleInput(key) {
+        this.lastInput = key;
+    }
+
+    update(dt) {
+        if (this.inputs.isPressed('left')) {
+            this.shiftPosition(-100, 0, dt);
+        }
+        if (this.inputs.isPressed('right')) {
+            this.shiftPosition(100, 0, dt);
+        }
+        if (this.inputs.isPressed('up')) {
+            this.shiftPosition(0, -100, dt);
+        }
+        if (this.inputs.isPressed('down')) {
+            this.shiftPosition(0, 100, dt);
+        }
+        this.lastInput = '';
+    }
 }
 
 class Entities {
-    constructor() {
+    constructor(inputs) {
         this.enemies = [];
-        this.player = new Player(200, 200);
+        this.player = new Player(200, 200, inputs);
     }
 }
 
-const entities = new Entities();
+const inputHandler = new InputHandler();
 
-// Now instantiate your objects.
-// Place all enemy objects in an array called allEnemies
-// Place the player object in a variable called player
-
-// This listens for key presses and sends the keys to your
-// Player.handleInput() method. You don't need to modify this.
-document.addEventListener('keyup', function(e) {
-    var allowedKeys = {
-        37: 'left',
-        38: 'up',
-        39: 'right',
-        40: 'down'
-    };
-
-    player.handleInput(allowedKeys[e.keyCode]);
-});
+const entities = new Entities(inputHandler);
