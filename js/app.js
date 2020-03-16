@@ -1,4 +1,22 @@
 
+
+class Map {
+    constructor () {
+        this.blockWidth = 101;
+        this.blockHeight = 83;
+        this.widthTiles = 5;
+        this.heightTiles = 6;
+    }
+
+    widthPixels () {
+        return this.blockWidth * this.widthTiles;
+    }
+
+    heightPixels () {
+        return this.blockHeight * this.heightTiles;
+    }
+}
+
 class InputHandler {
     constructor() {
         this.allowedKeys = {
@@ -48,7 +66,10 @@ class Entity {
     // set the "sprite" property to a string containing a valid image file name
     render() {
         if (this.sprite) {
-            ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+            // entity sprites are not quite aligned with map block sprites,
+            // this places them "on top of" map blocks
+            const EntityYAdjust = 15;
+            ctx.drawImage(Resources.get(this.sprite), this.x, this.y - EntityYAdjust);
         }
     }
 
@@ -63,14 +84,13 @@ class Enemy extends Entity {
 }
 
 class Player extends Entity {
-    constructor(x, y, inputs) {
+    constructor(x, y, inputs, map) {
         super(x, y);
+        this.width = 100;
+        this.height = 100;
         this.sprite = 'images/char-boy.png';
         this.inputs = inputs;
-    }
-
-    handleInput(key) {
-        this.lastInput = key;
+        this.map = map;
     }
 
     update(dt) {
@@ -86,17 +106,23 @@ class Player extends Entity {
         if (this.inputs.isPressed('down')) {
             this.shiftPosition(0, 100, dt);
         }
-        this.lastInput = '';
+        // Ensure player does not move off the edge of the map
+        this.x = Math.max(0, this.x);
+        this.y = Math.max(0, this.y);
+        this.x = Math.min(this.x, this.map.widthPixels() - this.map.blockWidth);
+        this.y = Math.min(this.y, this.map.heightPixels() - this.map.blockHeight);
     }
 }
 
 class Entities {
-    constructor(inputs) {
+    constructor(inputs, map) {
         this.enemies = [];
-        this.player = new Player(200, 200, inputs);
+        this.player = new Player(map.blockWidth * 2, map.blockHeight * 0, inputs, map);
     }
 }
 
+const map = new Map();
+
 const inputHandler = new InputHandler();
 
-const entities = new Entities(inputHandler);
+const entities = new Entities(inputHandler, map);

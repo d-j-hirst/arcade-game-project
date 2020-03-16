@@ -13,22 +13,21 @@
  * writing app.js a little simpler to work with.
  */
 
-const BLOCK_WIDTH = 101;
-const BLOCK_HEIGHT = 83;
-
 var Engine = (function(global) {
     /* Predefine the variables we'll be using within this scope,
      * create the canvas element, grab the 2D context for that canvas
      * set the canvas element's height/width and add it to the DOM.
      */
+    const canvasYOffset = 55; // transparent area at top of image, enlarge canvas to account for this
+
     var doc = global.document,
         win = global.window,
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
         lastTime;
 
-    canvas.width = 505;
-    canvas.height = 606;
+    canvas.width = map.widthPixels();
+    canvas.height = map.heightPixels() + canvasYOffset;
     doc.body.appendChild(canvas);
 
     /* This function serves as the kickoff point for the game loop itself
@@ -115,8 +114,8 @@ var Engine = (function(global) {
                 'images/grass-block.png',   // Row 1 of 2 of grass
                 'images/grass-block.png'    // Row 2 of 2 of grass
             ],
-            numRows = 6,
-            numCols = 5,
+            numRows = map.heightTiles,
+            numCols = map.widthTiles,
             row, col;
 
         // Before drawing, clear existing canvas
@@ -135,7 +134,7 @@ var Engine = (function(global) {
                  * so that we get the benefits of caching these images, since
                  * we're using them over and over.
                  */
-                ctx.drawImage(Resources.get(rowImages[row]), col * BLOCK_WIDTH, row * BLOCK_HEIGHT);
+                ctx.drawImage(Resources.get(rowImages[row]), col * map.blockWidth, row * map.blockHeight);
             }
         }
 
