@@ -1,18 +1,38 @@
-
-
-class Map {
+class Level {
     constructor () {
         this.blockWidth = 101;
         this.blockHeight = 83;
         this.widthTiles = 5;
         this.heightTiles = 6;
+        this.tiles = [];
+        this.generateTiles();
     }
 
-    widthPixels () {
+    generateTiles() {
+        for (let column = 0; column < this.widthTiles; column++) {
+            this.tiles.push('images/water-block.png');
+        }
+        for (let row = 0; row < 3; row++) {
+            for (let column = 0; column < this.widthTiles; column++) {
+                this.tiles.push('images/stone-block.png');
+            }
+        }
+        for (let row = 0; row < 2; row++) {
+            for (let column = 0; column < this.widthTiles; column++) {
+                this.tiles.push('images/grass-block.png');
+            }
+        }
+    }
+
+    getTile(row, col) {
+        return this.tiles[row * this.widthTiles + col];
+    }
+
+    widthPixels() {
         return this.blockWidth * this.widthTiles;
     }
 
-    heightPixels () {
+    heightPixels() {
         return this.blockHeight * this.heightTiles;
     }
 }
@@ -66,8 +86,8 @@ class Entity {
     // set the "sprite" property to a string containing a valid image file name
     render() {
         if (this.sprite) {
-            // entity sprites are not quite aligned with map block sprites,
-            // this places them "on top of" map blocks
+            // entity sprites are not quite aligned with level block sprites,
+            // this places them "on top of" level blocks
             const EntityYAdjust = 15;
             ctx.drawImage(Resources.get(this.sprite), this.x, this.y - EntityYAdjust);
         }
@@ -84,13 +104,13 @@ class Enemy extends Entity {
 }
 
 class Player extends Entity {
-    constructor(x, y, inputs, map) {
+    constructor(x, y, inputs, level) {
         super(x, y);
         this.width = 100;
         this.height = 100;
         this.sprite = 'images/char-boy.png';
         this.inputs = inputs;
-        this.map = map;
+        this.level = level;
     }
 
     update(dt) {
@@ -106,23 +126,24 @@ class Player extends Entity {
         if (this.inputs.isPressed('down')) {
             this.shiftPosition(0, 100, dt);
         }
-        // Ensure player does not move off the edge of the map
+        // Ensure player does not move off the edge of the level
         this.x = Math.max(0, this.x);
         this.y = Math.max(0, this.y);
-        this.x = Math.min(this.x, this.map.widthPixels() - this.map.blockWidth);
-        this.y = Math.min(this.y, this.map.heightPixels() - this.map.blockHeight);
+        this.x = Math.min(this.x, this.level.widthPixels() - this.level.blockWidth);
+        this.y = Math.min(this.y, this.level.heightPixels() - this.level.blockHeight);
     }
 }
 
 class Entities {
-    constructor(inputs, map) {
+    constructor(inputs, level) {
         this.enemies = [];
-        this.player = new Player(map.blockWidth * 2, map.blockHeight * 0, inputs, map);
+        this.player = new Player(level.blockWidth * 2, level.blockHeight * 0, inputs, level);
+        this.enemies.push(new Enemy(-50, 0));
     }
 }
 
-const map = new Map();
+const level = new Level();
 
 const inputHandler = new InputHandler();
 
-const entities = new Entities(inputHandler, map);
+const entities = new Entities(inputHandler, level);

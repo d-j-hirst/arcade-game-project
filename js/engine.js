@@ -4,8 +4,8 @@
 // (such as rendering, user control and entity interactions) are left to the app script
 // to define, allowing for proper separation of concerns.
 class Engine {
-    constructor(map, entities) {
-        this.map = map;
+    constructor(level, entities) {
+        this.level = level;
         this.entities = entities;
         this.lastTime = 0;
         this.allowInitialisation = false;
@@ -21,8 +21,8 @@ class Engine {
         this.canvas = doc.createElement('canvas');
         const ctx = this.canvas.getContext('2d');
 
-        this.canvas.width = this.map.widthPixels();
-        this.canvas.height = this.map.heightPixels() + canvasYOffset;
+        this.canvas.width = this.level.widthPixels();
+        this.canvas.height = this.level.heightPixels() + canvasYOffset;
         doc.body.appendChild(this.canvas);
 
         // Assign context to a global variable so it can be used in the app file
@@ -101,40 +101,13 @@ class Engine {
 
     // Draws the background for the current game level
     renderLevel() {
-        // TODO: Level information should be held in app file class and passed here
-
-        /* This array holds the relative URL to the image used
-            * for that particular row of the game level.
-            */
-        var rowImages = [
-            'images/water-block.png',   // Top row is water
-            'images/stone-block.png',   // Row 1 of 3 of stone
-            'images/stone-block.png',   // Row 2 of 3 of stone
-            'images/stone-block.png',   // Row 3 of 3 of stone
-            'images/grass-block.png',   // Row 1 of 2 of grass
-            'images/grass-block.png'    // Row 2 of 2 of grass
-        ],
-        numRows = this.map.heightTiles,
-        numCols = this.map.widthTiles,
-        row, col;
-
         // Before drawing, clear existing canvas
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        /* Loop through the number of rows and columns we've defined above
-            * and, using the rowImages array, draw the correct image for that
-            * portion of the "grid"
-            */
-        for (row = 0; row < numRows; row++) {
-            for (col = 0; col < numCols; col++) {
-                /* The drawImage function of the canvas' context element
-                    * requires 3 parameters: the image to draw, the x coordinate
-                    * to start drawing and the y coordinate to start drawing.
-                    * We're using our Resources helpers to refer to our images
-                    * so that we get the benefits of caching these images, since
-                    * we're using them over and over.
-                    */
-                ctx.drawImage(Resources.get(rowImages[row]), col * map.blockWidth, row * map.blockHeight);
+        for (let row = 0; row < this.level.heightTiles; row++) {
+            for (let col = 0; col < this.level.widthTiles; col++) {
+                const fileName = this.level.getTile(row, col);
+                ctx.drawImage(Resources.get(fileName), col * level.blockWidth, row * level.blockHeight);
             }
         }
     }
@@ -152,4 +125,4 @@ class Engine {
 }
 
 // Constructing the Engine is enough to run the game (via a series of callbacks)
-const engine = new Engine(map, entities);
+const engine = new Engine(level, entities);
