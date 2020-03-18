@@ -1,7 +1,7 @@
 class Level {
     constructor () {
-        this.blockWidth = 101;
-        this.blockHeight = 83;
+        this.tileWidth = 101;
+        this.tileHeight = 83;
         this.widthTiles = 5;
         this.heightTiles = 6;
         this.tiles = [];
@@ -29,11 +29,11 @@ class Level {
     }
 
     widthPixels() {
-        return this.blockWidth * this.widthTiles;
+        return this.tileWidth * this.widthTiles;
     }
 
     heightPixels() {
-        return this.blockHeight * this.heightTiles;
+        return this.tileHeight * this.heightTiles;
     }
 }
 
@@ -97,9 +97,14 @@ class Entity {
 }
 
 class Enemy extends Entity {
-    constructor(x, y) {
+    constructor(x, y, movement = {x: 0, y: 0}) {
         super(x, y);
         this.sprite = 'images/enemy-bug.png';
+        this.movement = movement;
+    }
+
+    update(dt) {
+        this.shiftPosition(this.movement.x, this.movement.y, dt);
     }
 }
 
@@ -129,21 +134,63 @@ class Player extends Entity {
         // Ensure player does not move off the edge of the level
         this.x = Math.max(0, this.x);
         this.y = Math.max(0, this.y);
-        this.x = Math.min(this.x, this.level.widthPixels() - this.level.blockWidth);
-        this.y = Math.min(this.y, this.level.heightPixels() - this.level.blockHeight);
+        this.x = Math.min(this.x, this.level.widthPixels() - this.level.tileWidth);
+        this.y = Math.min(this.y, this.level.heightPixels() - this.level.tileHeight);
     }
 }
 
 class Entities {
     constructor(inputs, level) {
-        this.enemies = [];
-        this.player = new Player(level.blockWidth * 2, level.blockHeight * 0, inputs, level);
-        this.enemies.push(new Enemy(-50, 0));
+        this.enemies = Array(level.heightTiles - 1).fill(new Enemy(0, 0, false));
+        this.player = new Player(level.tileWidth * 2, level.tileHeight * 0, inputs, level);
+        this.inputs = inputs;
+        this.level = level;
+    }
+
+    update(dt) {
+        this.checkEnemyCreation(dt);
+        this.checkEnemyRemoval();
+        this.enemies.forEach(enemy => enemy.update(dt));
+        this.player.update(dt);
+        this.checkCollisions();
+    }
+
+    checkEnemyCreation(dt) {
+        const ENEMY_CREATION_CHANCE = 0.5;
+        if (Math.random() < dt * ENEMY_CREATION_CHANCE) {
+            // don't create enemies in top or bottom rows
+            const row = Math.floor(Math.random() * (this.level.heightTiles - 2) + 1);
+            // place enemies at either the left or right edge of screen
+            // and set their movement to travel to the other side
+            if (Math.random() < 0.5) {
+                this.enemies.push(new Enemy(-this.level.tileWidth, row * this.level.tileHeight, {x: 100, y: 0}));
+            } else {
+                this.enemies.push(new Enemy(this.level.widthPixels() + this.level.tileWidth, row * this.level.tileHeight, {x: -100, y: 0}));
+            }
+        }
+    }
+
+    checkEnemyRemoval() {
+        let toBeRemoved = -1;
+        do {
+            toBeRemoved = -1;
+            for (let enemyIndex = 0; enemyIndex < this.enemies.length; enemyIndex++) {
+                let removeEnemy = false;
+                const enemyToCheck = this.enemies[enemyIndex];
+                if (enemyToCheck.x <= -this.level.tileWidth && enemyToCheck.movement.x < 0) removeEnemy = true;
+                if (enemyToCheck.x >= this.level.widthPixels() && enemyToCheck.movement.x > 0) removeEnemy = true;
+                if (removeEnemy) {
+                    toBeRemoved = enemyIndex;
+                    break;
+                }
+            }
+            if (toBeRemoved >= 0) {
+                this.enemies.splice(toBeRemoved, 1);
+            }
+        } while (toBeRemoved >= 0);
+    }
+
+    checkCollisions() {
+        // TODO: check collisions between player and enemies.
     }
 }
-
-const level = new Level();
-
-const inputHandler = new InputHandler();
-
-const entities = new Entities(inputHandler, level);

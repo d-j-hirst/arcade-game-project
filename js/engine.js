@@ -57,7 +57,9 @@ class Engine {
     // This is looped over and over to produce the game animation
     runLoopIteration() {
         // Get time taken for the last frame to determine movement distances for entities
-        const dt = this.updateTimer();
+        // This doesn't need to be more than 100ms
+        // (for debugging purposes there may be very large gaps between frames)
+        const dt = Math.min(0.1, this.updateTimer());
 
         // Pass the change in time to the update function so that the animation can be consisten
         // regardless of screen/browser refresh rate
@@ -83,14 +85,7 @@ class Engine {
     // Function for collective handling the updating of the game state
     // (in particular, movement and iteraction of entities)
     update(dt) {
-        this.updateEntities(dt);
-        // checkCollisions();
-    }
-
-    // updates entities according to their own rules
-    updateEntities(dt) {
-        entities.enemies.forEach(enemy => enemy.update(dt));
-        entities.player.update(dt);
+        this.entities.update(dt);
     }
 
     // Draws the current game level and entities using helper functions
@@ -107,15 +102,15 @@ class Engine {
         for (let row = 0; row < this.level.heightTiles; row++) {
             for (let col = 0; col < this.level.widthTiles; col++) {
                 const fileName = this.level.getTile(row, col);
-                ctx.drawImage(Resources.get(fileName), col * level.blockWidth, row * level.blockHeight);
+                ctx.drawImage(Resources.get(fileName), col * this.level.tileWidth, row * this.level.tileHeight);
             }
         }
     }
 
     // Draws the entities for the current game level
     renderEntities() {
-        entities.enemies.forEach(enemy => enemy.render());
-        entities.player.render();
+        this.entities.enemies.forEach(enemy => enemy.render());
+        this.entities.player.render();
     }
 
     // Currently a no-op but may be used to reset the canvas in future
@@ -124,5 +119,15 @@ class Engine {
     }
 }
 
-// Constructing the Engine is enough to run the game (via a series of callbacks)
-const engine = new Engine(level, entities);
+function setup() {
+    const level = new Level();
+
+    const inputHandler = new InputHandler();
+
+    const entities = new Entities(inputHandler, level);
+
+    // Constructing the Engine is enough to run the game (via a series of callbacks)
+    const engine = new Engine(level, entities);
+}
+
+setup();
