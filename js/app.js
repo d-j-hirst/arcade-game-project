@@ -120,13 +120,16 @@ class Entities {
         this.level = level;
     }
 
-    // Returns true if the game
+    // Returns an object containing boolean properties:
+    //  -collisionOccurred: true if player collided with an enemy, false otherwise
+    //  -levelWon: true if player is in the win zone, false otherwise
     update(dt) {
         this.checkEnemyCreation(dt);
         this.checkEnemyRemoval();
         this.enemies.forEach(enemy => enemy.update(dt));
         const collisionOccurred = this.checkCollisions();
-        return !collisionOccurred;
+        const levelWon = this.checkPlayerWin();
+        return {collisionOccurred: collisionOccurred, levelWon: levelWon};
     }
 
     checkEnemyCreation(dt) {
@@ -175,6 +178,11 @@ class Entities {
             // when the sprites are visually touching
             if (distance < this.level.tileWidth * 0.6) return true;
         }
+        return false;
+    }
+
+    checkPlayerWin() {
+        if (this.player.pos.y < 20) return true;
         return false;
     }
 }
