@@ -147,12 +147,14 @@ class Entities {
         this.level = level;
     }
 
+    // Returns true if the game
     update(dt) {
         this.checkEnemyCreation(dt);
         this.checkEnemyRemoval();
         this.enemies.forEach(enemy => enemy.update(dt));
         this.player.update(dt);
-        this.checkCollisions();
+        const collisionOccurred = this.checkCollisions();
+        return !collisionOccurred;
     }
 
     checkEnemyCreation(dt) {
@@ -190,7 +192,16 @@ class Entities {
         } while (toBeRemoved >= 0);
     }
 
+    // Returns true if there is a collision between the player and an enemy,
+    // and false otherwise
     checkCollisions() {
-        // TODO: check collisions between player and enemies.
+        for (let enemy of this.enemies) {
+            const distance = Math.hypot(this.player.x - enemy.x, this.player.y - enemy.y);
+            // 0.6 here is just determined by manual testing
+            // to be the furthest distance that will only ever trigger
+            // when the sprites are visually touching
+            if (distance < this.level.tileWidth * 0.6) return true;
+        }
+        return false;
     }
 }

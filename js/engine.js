@@ -4,12 +4,8 @@
 // (such as rendering, user control and entity interactions) are left to the app script
 // to define, allowing for proper separation of concerns.
 class Engine {
-    constructor(level, entities) {
-        this.level = level;
-        this.entities = entities;
-        this.lastTime = 0;
-        this.allowInitialisation = false;
-
+    constructor() {
+        this.reset();
         this.prepareResources();
         this.setupCanvas();
     }
@@ -42,6 +38,7 @@ class Engine {
     }
 
     run() {
+        this.running = true;
         this.initialise();
         this.runLoopIteration();
     }
@@ -49,8 +46,6 @@ class Engine {
     // Some initial setup including setting the lastTime variable so that the main game loop
     // has an initial value to work with
     initialise() {
-        //while (!this.allowInitialisation);
-        this.reset();
         this.lastTime = Date.now();
     }
 
@@ -85,7 +80,12 @@ class Engine {
     // Function for collective handling the updating of the game state
     // (in particular, movement and iteraction of entities)
     update(dt) {
-        this.entities.update(dt);
+        if (!this.running) return;
+        this.running = this.entities.update(dt);
+        if (!this.running) {
+            this.reset();
+            this.run();
+        }
     }
 
     // Draws the current game level and entities using helper functions
@@ -113,21 +113,18 @@ class Engine {
         this.entities.player.render();
     }
 
-    // Currently a no-op but may be used to reset the canvas in future
     reset() {
-        // noop
+        this.level = new Level();
+        this.inputHandler = new InputHandler();
+        this.entities = new Entities(this.inputHandler, this.level);
+        this.lastTime = 0;
+        this.allowInitialisation = false;
+        this.running = false;
     }
 }
 
 function setup() {
-    const level = new Level();
-
-    const inputHandler = new InputHandler();
-
-    const entities = new Entities(inputHandler, level);
-
-    // Constructing the Engine is enough to run the game (via a series of callbacks)
-    const engine = new Engine(level, entities);
+    const engine = new Engine();
 }
 
 setup();
