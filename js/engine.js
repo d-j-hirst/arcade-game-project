@@ -6,6 +6,15 @@
 class Engine {
     constructor() {
         this.reset();
+    }
+
+    reset() {
+        this.level = new Level();
+        this.entities = new Entities(this.level);
+        this.inputHandler = new InputHandler(this.entities);
+        this.lastTime = 0;
+        this.allowInitialisation = false;
+        this.running = false;
         this.prepareResources();
         this.setupCanvas();
     }
@@ -19,6 +28,9 @@ class Engine {
 
         this.canvas.width = this.level.widthPixels();
         this.canvas.height = this.level.heightPixels() + canvasYOffset;
+        while (doc.body.firstChild) {
+            doc.body.removeChild(doc.body.lastChild);
+        }
         doc.body.appendChild(this.canvas);
 
         // Assign context to a global variable so it can be used in the app file
@@ -111,15 +123,6 @@ class Engine {
     renderEntities() {
         this.entities.enemies.forEach(enemy => enemy.render());
         this.entities.player.render();
-    }
-
-    reset() {
-        this.level = new Level();
-        this.entities = new Entities(this.level);
-        this.inputHandler = new InputHandler(this.entities);
-        this.lastTime = 0;
-        this.allowInitialisation = false;
-        this.running = false;
     }
 }
 
