@@ -115,8 +115,8 @@ class Engine {
 
     reset() {
         this.level = new Level();
-        this.inputHandler = new InputHandler();
-        this.entities = new Entities(this.inputHandler, this.level);
+        this.entities = new Entities(this.level);
+        this.inputHandler = new InputHandler(this.entities);
         this.lastTime = 0;
         this.allowInitialisation = false;
         this.running = false;
