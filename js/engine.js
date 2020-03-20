@@ -67,7 +67,8 @@ class Engine {
             'images/water-block.png',
             'images/grass-block.png',
             'images/enemy-bug.png',
-            'images/char-boy.png'
+            'images/char-boy.png',
+            'images/Gem Green.png'
         ]);
     }
 
@@ -146,8 +147,9 @@ class Engine {
 
     // Draws the entities for the current game level
     renderEntities() {
-        this.entities.enemies.forEach(enemy => enemy.render());
+        this.entities.gems.forEach(gem => gem.render());
         this.entities.player.render();
+        this.entities.enemies.forEach(enemy => enemy.render());
     }
 
     buttonLeft() {

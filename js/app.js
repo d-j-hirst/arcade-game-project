@@ -25,6 +25,14 @@ class Level {
         }
     }
 
+    getGemLocations() {
+        const gemLocations = [];
+        gemLocations.push({x: this.tileWidth * 3, y: this.tileHeight * 1});
+        gemLocations.push({x: this.tileWidth * 1, y: this.tileHeight * 2});
+        gemLocations.push({x: this.tileWidth * 4, y: this.tileHeight * 3});
+        return gemLocations;
+    }
+
     getTile(row, col) {
         return this.tiles[row * this.widthTiles + col];
     }
@@ -85,6 +93,13 @@ class Enemy extends Entity {
     }
 }
 
+class Gem extends Entity {
+    constructor(position = {x: 0, y: 0}) {
+        super(position);
+        this.sprite = 'images/Gem Green.png';
+    }
+}
+
 class Player extends Entity {
     constructor(position = {x: 0, y: 0}, level) {
         super(position);
@@ -115,9 +130,12 @@ class Player extends Entity {
 
 class Entities {
     constructor(level) {
-        this.enemies = [];
-        this.player = new Player(level.start, level);
         this.level = level;
+        this.enemies = [];
+        this.gems = [];
+        const gemLocations = this.level.getGemLocations();
+        gemLocations.forEach(gemLocation => this.gems.push(new Gem(gemLocation)));
+        this.player = new Player(this.level.start, this.level);
     }
 
     // Returns an object containing boolean properties:
