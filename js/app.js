@@ -190,11 +190,9 @@ class Entities {
     // and false otherwise
     checkCollisions() {
         for (let enemy of this.enemies) {
-            const distance = Math.hypot(this.player.pos.x - enemy.pos.x, this.player.pos.y - enemy.pos.y);
-            // 0.6 here is just determined by manual testing
-            // to be the furthest distance that will only ever trigger
-            // when the sprites are visually touching
-            if (distance < this.level.tileWidth * 0.6) return true;
+            if (Math.abs(this.player.pos.x - enemy.pos.x) > this.level.tileWidth * 0.77) continue;
+            if (Math.abs(this.player.pos.y - enemy.pos.y) > this.level.tileWidth * 0.6) continue;
+            return true;
         }
         return false;
     }
@@ -214,12 +212,14 @@ class InputHandler {
             39: 'right',
             40: 'down'
         };
+        this.inputsEnabled = true;
         this.initializeEventListeners();
     }
 
     initializeEventListeners() {
         const that = this;
         document.addEventListener('keyup', e => {
+            if (!that.inputsEnabled) return;
             const keyValue = that.allowedKeys[e.keyCode];
             if (keyValue) that.entities.player.update(keyValue);
         });

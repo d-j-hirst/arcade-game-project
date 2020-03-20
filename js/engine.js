@@ -74,6 +74,7 @@ class Engine {
 
     run() {
         this.state = this.states.running;
+        this.inputHandler.inputsEnabled = true;
         this.initialiseLevel();
         this.runLoopIteration();
     }
@@ -118,9 +119,11 @@ class Engine {
         if (this.state != this.states.running) return;
         const entityMessages = this.entities.update(dt);
         if (entityMessages.collisionOccurred) {
+            this.inputHandler.inputsEnabled = false;
             this.state = this.states.gameOver;
         }
         else if (entityMessages.levelWon) {
+            this.inputHandler.inputsEnabled = false;
             this.state = this.states.levelWin;
         }
     }
