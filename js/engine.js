@@ -3,14 +3,19 @@
 // (such as game object rendering, user control and entity interactions) are left to the app script
 // to define, allowing for proper separation of concerns.
 class Engine {
+    // Via the called functions this sets in motion the game loop
     constructor() {
         this.initialiseConstants();
-        this.levels = new Levels();
         this.reset(true);
     }
 
+    // Initialises all persistent values and objects that are to remain
+    // even after the game is restarted
     initialiseConstants() {
+        // Enumeration of valid game states, which control what input is valid and what is rendered
         this.states = Object.freeze({initialising: 0, running: 1, levelWin: 2, gameOver: 3});
+
+        // UI positioning constants
         this.BUTTON_HEIGHT = 50;
         this.BUTTON_WIDTH = 200;
         this.MESSAGE_PADDING = 30;
@@ -21,15 +26,22 @@ class Engine {
         this.TEXT_LINE2_Y_OFFSET = 63;
         this.BUTTON_Y_OFFSET = 85;
         this.BUTTON_TEXT_OFFSET = 120;
+
         this.initializeEventListeners();
+
+        // Level factory: while individual levels are reset each time a new level is loaded, the factory itself is persistent.
+        this.levels = new Levels();
     }
 
+    // Event listeners for mouse movement/click. Used for clicking Continue/Restart on in-game message boxes
     initializeEventListeners() {
         const that = this;
         document.addEventListener('click', e => that.handleClick(e));
         document.addEventListener('mousemove', e => that.handleMouseMove(e));
     }
 
+    // Resets the level, dependent coordination classes, resources and
+    // Set "fullReset" to return to first level and reset score to zero, and false to proceed to next level
     reset(fullReset) {
         this.state = this.states.initialising;
         if (fullReset) {
@@ -43,10 +55,11 @@ class Engine {
         this.lastTime = 0;
         this.timeSinceReset = 0;
         this.buttonHighlight = false;
-        this.prepareResources();
         this.setupCanvas();
+        this.prepareResources();
     }
 
+    // Creates the HTML canvas element and adds it to the DOM
     setupCanvas() {
         this.CANVAS_Y_OFFSET = 55; // transparent area at top of image, enlarge canvas to account for this
 
@@ -56,6 +69,7 @@ class Engine {
 
         this.canvas.width = this.level.widthPixels();
         this.canvas.height = this.level.heightPixels() + this.CANVAS_Y_OFFSET;
+        // Remove previously created canvas elements, different levels may have different sized canvases so just make a new one
         while (doc.body.firstChild) {
             doc.body.removeChild(doc.body.lastChild);
         }
@@ -65,6 +79,7 @@ class Engine {
         window.ctx = ctx;
     }
 
+    // Asks for loading of resources, and asks to start running the main loop once that's done
     prepareResources() {
         const that = this;
         Resources.onReady(() => that.run());
@@ -78,8 +93,9 @@ class Engine {
         ]);
     }
 
+    // Starts running the main loop. This involves some initialisations and then calling
+    // the first iteration of the loop (which will then call additional iteration by callbacks)
     run() {
-        this.state = this.states.running;
         this.initialiseLevel();
         this.runLoopIteration();
     }
@@ -87,6 +103,7 @@ class Engine {
     // Some initial setup including setting the lastTime variable so that the main game loop
     // has an initial value to work with
     initialiseLevel() {
+        this.state = this.states.running;
         this.lastTime = Date.now();
     }
 
@@ -118,11 +135,16 @@ class Engine {
         return dt;
     }
 
+    // Makes sure this information is consistent everywhere it's used. Player input is disabled
+    // for the first few seconds to allow enemies to enter the screen
     playerInputAllowed() {
         return this.timeSinceReset > 2;
     }
 
+    // Determines visibility of the player entity. If player input is disabled then the
+    // player entity will "blink" and is periodically not visible
     playerVisible() {
+        // Player entity blinks at 2 cycles per second
         const blinkState = Math.floor(this.timeSinceReset * 4 % 2) == 0;
         return this.state != this.states.running || blinkState || this.playerInputAllowed();
     }
@@ -137,12 +159,10 @@ class Engine {
         if (entityMessages.hitEnemy) {
             this.inputHandler.inputsEnabled = false;
             this.state = this.states.gameOver;
-        }
-        else if (entityMessages.levelWon) {
+        } else if (entityMessages.levelWon) {
             this.inputHandler.inputsEnabled = false;
             this.state = this.states.levelWin;
-        }
-        else if (entityMessages.pickedUpGem) {
+        } else if (entityMessages.pickedUpGem) {
             this.score++;
         }
     }
@@ -174,6 +194,8 @@ class Engine {
         this.entities.enemies.forEach(enemy => enemy.render());
     }
 
+    // These functions keep button positioning consistent between rendering and input handling
+
     buttonLeft() {
         return (this.canvas.width - this.BUTTON_WIDTH) / 2;
     }
@@ -190,6 +212,9 @@ class Engine {
         return this.buttonTop() + this.BUTTON_HEIGHT;
     }
 
+    // Renders messages that appear when the player reaches the next level or hits an enemy
+    // If there were more UI elements in game it would be good to create separate classes for them
+    // but since it's just one box with similar messages just code it here for now
     renderMessages() {
         if (this.state == this.states.running) return;
         if (this.state == this.states.levelWin || this.state == this.states.gameOver) {
@@ -230,6 +255,9 @@ class Engine {
 
     }
 
+    // Handler for click events. If the message button is clicked on, this
+    // results in progression to next level or game reset, depending on what
+    // the message was for
     handleClick(event) {
         const x = event.offsetX;
         const y = event.offsetY;
@@ -237,28 +265,24 @@ class Engine {
             if (this.state == this.states.gameOver) {
                 this.reset(true);
                 this.run();
-            }
-            else if (this.state == this.states.levelWin) {
+            } else if (this.state == this.states.levelWin) {
                 this.reset(false);
                 this.run();
             }
         }
     }
 
+    // Handler for mouse move events that may highlight the message box's button
     handleMouseMove(event) {
         const x = event.offsetX;
         const y = event.offsetY;
         if (x >= this.buttonLeft() && x < this.buttonRight() && y >= this.buttonTop() && y < this.buttonBottom()) {
             this.buttonHighlight = true;
-        }
-        else {
+        } else {
             this.buttonHighlight = false;
         }
     }
 }
 
-function setup() {
-    const engine = new Engine();
-}
-
-setup();
+// All that is needed now to run the game is to create an engine object, it does the rest
+const engine = new Engine();

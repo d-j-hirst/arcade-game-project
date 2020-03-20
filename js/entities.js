@@ -1,6 +1,6 @@
 // entities.js
 // Defines the behaviour of game entities (player, enemies, gems)
-// (Note that some player properties are controlled at engine level)
+// (Note that some player features are controlled at engine level)
 
 // Base class for any object (including enemies, player(s), gems)
 // that are drawn onto a position on the screen
@@ -72,14 +72,11 @@ class Player extends Entity {
     update(input) {
         if (input == 'left') {
             this.shiftPosition({x: -this.level.tileWidth, y: 0});
-        }
-        else if (input == 'right') {
+        } else if (input == 'right') {
             this.shiftPosition({x: this.level.tileWidth, y: 0});
-        }
-        else if (input == 'up') {
+        } else if (input == 'up') {
             this.shiftPosition({x: 0, y: -this.level.tileHeight});
-        }
-        else if (input == 'down') {
+        } else if (input == 'down') {
             this.shiftPosition({x: 0, y: this.level.tileHeight});
         }
         // Ensure player does not move off the edge of the level
@@ -197,13 +194,19 @@ class Entities {
         return false;
     }
 
+    // Checks whether the player has reached the top of the screen
     checkPlayerWin() {
+        // 20 just an arbitrary number indicating "close to the top"
+        // If it's ever desired to make win conditions more complex then ask the level object whether it's a winning area
         if (this.player.pos.y < 20) return true;
         return false;
     }
 }
 
+// Class that covers input for the player
 class InputHandler {
+    // "level" is the current entity container, which is passed here as
+    // it contains the player entity that the input needs to be passed to
     constructor(entities) {
         this.entities = entities;
         this.allowedKeys = {
@@ -212,10 +215,13 @@ class InputHandler {
             39: 'right',
             40: 'down'
         };
-        this.inputsEnabled = false;
+        this.inputsEnabled = false; // inputs disabled for 2 seconds at the start of each level
         this.initializeEventListeners();
     }
 
+    // Event listener for the "keyup" event.
+    // Checks if the key pressed is a valid input key and, if so,
+    // passes a string representing the semantics of the key press to the player entity
     initializeEventListeners() {
         const that = this;
         document.addEventListener('keyup', e => {
@@ -223,9 +229,5 @@ class InputHandler {
             const keyValue = that.allowedKeys[e.keyCode];
             if (keyValue) that.entities.player.update(keyValue);
         });
-    }
-
-    isPressed(keyValue) {
-        return this.pressedKeys.includes(keyValue);
     }
 }
