@@ -218,6 +218,10 @@ class Entities {
     constructor(level) {
         this.level = level;
         this.enemies = [];
+         // always create at least one enemy
+         // and possibly up to one more per row
+        this.checkEnemyCreation(1000);
+        for (let i = 0; i < this.level.numEnemyRows - 1; ++i) this.checkEnemyCreation(2);
         this.gems = [];
         const gemLocations = this.level.getGemLocations();
         gemLocations.forEach(gemLocation => this.gems.push(new Gem(gemLocation)));
