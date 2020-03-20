@@ -18,6 +18,7 @@ class Engine {
         this.INNER_MESSAGE_PADDING = this.MESSAGE_PADDING + this.MESSAGE_BORDER;
         this.INNER_MESSAGE_HEIGHT = 150;
         this.TEXT_Y_OFFSET = 35;
+        this.TEXT_LINE2_Y_OFFSET = 63;
         this.BUTTON_Y_OFFSET = 85;
         this.BUTTON_TEXT_OFFSET = 120;
         this.initializeEventListeners();
@@ -118,13 +119,16 @@ class Engine {
     update(dt) {
         if (this.state != this.states.running) return;
         const entityMessages = this.entities.update(dt);
-        if (entityMessages.collisionOccurred) {
+        if (entityMessages.hitEnemy) {
             this.inputHandler.inputsEnabled = false;
             this.state = this.states.gameOver;
         }
         else if (entityMessages.levelWon) {
             this.inputHandler.inputsEnabled = false;
             this.state = this.states.levelWin;
+        }
+        else if (entityMessages.pickedUpGem) {
+            this.score++;
         }
     }
 
@@ -201,6 +205,13 @@ class Engine {
         if (this.state == this.states.gameOver) buttonText = 'Restart';
         else if (this.state == this.states.levelWin) buttonText = 'Continue';
         ctx.fillText(buttonText, this.canvas.width / 2, this.INNER_MESSAGE_PADDING + this.CANVAS_Y_OFFSET + this.BUTTON_TEXT_OFFSET);
+
+        // secondary text
+        ctx.font = '20px Arial';
+        let secondMessageText = '';
+        if (this.state == this.states.gameOver) secondMessageText = `Your score was ${this.score} points!`;
+        else if (this.state == this.states.levelWin) secondMessageText = `Your score is ${this.score} points!`;
+        ctx.fillText(secondMessageText, this.canvas.width / 2, this.INNER_MESSAGE_PADDING + this.CANVAS_Y_OFFSET + this.TEXT_LINE2_Y_OFFSET);
 
     }
 

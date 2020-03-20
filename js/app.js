@@ -145,9 +145,10 @@ class Entities {
         this.checkEnemyCreation(dt);
         this.checkEnemyRemoval();
         this.enemies.forEach(enemy => enemy.update(dt));
-        const collisionOccurred = this.checkCollisions();
+        const hitEnemy = this.checkEnemyCollisions();
+        const pickedUpGem = this.checkGemCollisions();
         const levelWon = this.checkPlayerWin();
-        return {collisionOccurred: collisionOccurred, levelWon: levelWon};
+        return {hitEnemy: hitEnemy, pickedUpGem: pickedUpGem, levelWon: levelWon};
     }
 
     checkEnemyCreation(dt) {
@@ -188,11 +189,25 @@ class Entities {
 
     // Returns true if there is a collision between the player and an enemy,
     // and false otherwise
-    checkCollisions() {
-        for (let enemy of this.enemies) {
+    checkEnemyCollisions() {
+        for (const enemy of this.enemies) {
             if (Math.abs(this.player.pos.x - enemy.pos.x) > this.level.tileWidth * 0.77) continue;
             if (Math.abs(this.player.pos.y - enemy.pos.y) > this.level.tileWidth * 0.6) continue;
             return true;
+        }
+        return false;
+    }
+
+    // Returns true if there is a collision between the player and an gem,
+    // and false otherwise
+    // Also handles the removal of the gem picked up
+    checkGemCollisions() {
+        for (const gem of this.gems) {
+            if (Math.abs(this.player.pos.x - gem.pos.x) > this.level.tileWidth * 0.5) continue;
+            if (Math.abs(this.player.pos.y - gem.pos.y) > this.level.tileWidth * 0.5) continue;
+            const gemIndex = this.gems.indexOf(gem);
+            this.gems.splice(gemIndex, 1);
+            return true; // can only ever pick up one gem at a time
         }
         return false;
     }
