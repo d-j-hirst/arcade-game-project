@@ -160,24 +160,16 @@ class Entities {
     // If this didn't happen the array of enemies could become very large over time
     // and collision checking would slow down the game
     checkEnemyRemoval() {
-        let toBeRemoved = -1;
-        // In summary: go through all enemiee until we find one to be removed, remove it, then repeat the process
-        do {
-            toBeRemoved = -1;
-            for (let enemyIndex = 0; enemyIndex < this.enemies.length; enemyIndex++) {
-                let removeEnemy = false;
-                const enemyToCheck = this.enemies[enemyIndex];
-                if (enemyToCheck.x <= -this.level.tileWidth && enemyToCheck.movement.x < 0) removeEnemy = true;
-                if (enemyToCheck.x >= this.level.widthPixels() && enemyToCheck.movement.x > 0) removeEnemy = true;
-                if (removeEnemy) {
-                    toBeRemoved = enemyIndex;
-                    break;
-                }
+        for (let enemyIndex = 0; enemyIndex < this.enemies.length; enemyIndex++) {
+            let removeEnemy = false;
+            const enemyToCheck = this.enemies[enemyIndex];
+            if (enemyToCheck.pos.x <= -this.level.tileWidth && enemyToCheck.movement.x < 0) removeEnemy = true;
+            if (enemyToCheck.pos.x >= this.level.widthPixels() && enemyToCheck.movement.x > 0) removeEnemy = true;
+            if (removeEnemy) {
+                this.enemies.splice(enemyIndex, 1);
+                enemyIndex--;
             }
-            if (toBeRemoved >= 0) {
-                this.enemies.splice(toBeRemoved, 1);
-            }
-        } while (toBeRemoved >= 0);
+        }
     }
 
     // Returns true if there is a collision between the player and an enemy,
