@@ -67,7 +67,7 @@ class Level {
 
     // Returns gem locations for this level.
     // For now, the gems are distributed as "1 per stone row"
-    // and randomly distributed between
+    // and randomly distributed between all columns except for the ones at the very edge
     getGemLocations() {
         const gemLocations = [];
         for (let row = this.waterRows; row < this.stoneRows + this.waterRows; row++) {
@@ -77,6 +77,9 @@ class Level {
         return gemLocations;
     }
 }
+
+// The following classes are specific subclasses of the base Level class
+// The game progresses through them in sequence (see the Levels class below)
 
 class Level1 extends Level {
     constructor () {
@@ -150,19 +153,26 @@ class Level6 extends Level {
     }
 }
 
+// Level factory class
+// Creates level data on demand and handles level progression
 class Levels {
     constructor() {
         // Constructors are stored instead of the levels themselves
-        // This ensures that any levels
+        // This ensures that any level features are re-randomised if that level
+        // is used multiple times in the same session
         this.levels = [Level1, Level2, Level3, Level4, Level5, Level6];
         this.currentLevel = 0;
     }
 
+    // To be used when a game is initialised or reset
+    // Sets the current level to the first and returns that level's data.
     reset() {
         this.currentLevel = 0;
         return new this.levels[this.currentLevel]();
     }
 
+    // To be used when the player gets to the next level
+    // Increases the current level if not already at maximum, and returns that level's data.
     next() {
         if (this.currentLevel < this.levels.length - 1) this.currentLevel++;
         return new this.levels[this.currentLevel]();

@@ -1,21 +1,23 @@
+// entities.js
+// Defines the behaviour of game entities (player, enemies, gems)
+// (Note that some player properties are controlled at engine level)
 
-
-// Base class for any object (including enemies, player(s), other interactives)
+// Base class for any object (including enemies, player(s), gems)
 // that are drawn onto a position on the screen
 class Entity {
     constructor(pos = {x: 0, y: 0}) {
-        this.pos = Object.assign({}, pos);
+        this.pos = Object.assign({}, pos); // this comes from the level storage, want to clone it rather than create a reference
         this.sprite = '';
     }
 
     // Moves an entity by a velocity given by x and y (in pixels/s)
-    // multiplied by the time variable dt
+    // multiplied by the time variable dt (for smooth animations)
     move(velocity = {x: 0, y: 0}, dt) {
         this.pos.x += velocity.x * dt;
         this.pos.y += velocity.y * dt;
     }
 
-    // Moves an entity by the given vector
+    // Moves an entity by exactly the given vector
     shiftPosition(displacement = {x: 0, y: 0}) {
         this.pos.x += displacement.x;
         this.pos.y += displacement.y;
@@ -31,10 +33,9 @@ class Entity {
             ctx.drawImage(Resources.get(this.sprite), this.pos.x, this.pos.y - EntityYAdjust);
         }
     }
-
-    update(dt) {};
 }
 
+// Class for enemies. Enemies move across the screen at a constant rate (may vary per enemy).
 class Enemy extends Entity {
     constructor(position = {x: 0, y: 0}, movement = {x: 0, y: 0}) {
         super(position);
@@ -42,11 +43,13 @@ class Enemy extends Entity {
         this.movement = movement;
     }
 
+    // Updates the enemy movement based on the amount of time the previous frame lasted.
     update(dt) {
         this.move(this.movement, dt);
     }
 }
 
+// Class for gems. Gems simply stay on the screen at a location until picked up by a player or the level is reset.
 class Gem extends Entity {
     constructor(position = {x: 0, y: 0}) {
         super(position);
@@ -54,13 +57,18 @@ class Gem extends Entity {
     }
 }
 
+// Class for the player entity. Moves about the screen in discrete steps based on player input.
 class Player extends Entity {
-    constructor(position = {x: 0, y: 0}, level) {
-        super(position);
+    // "level" is the current level, which is passed here as this entity
+    // needs to know about the characteristics of the current level to define its movement.
+    constructor(level) {
+        super(level.start);
         this.sprite = 'images/char-boy.png';
         this.level = level;
     }
 
+    // Updates the player based on the key name. Each input moves the player by exactly one tile,
+    // with movement off the edge of the map being prevented.
     update(input) {
         if (input == 'left') {
             this.shiftPosition({x: -this.level.tileWidth, y: 0});
@@ -82,22 +90,43 @@ class Player extends Entity {
     }
 }
 
+// Coordinator/Container class for the entities in the game
 class Entities {
+    // "level" is the current level, which is passed here as the
+    // level has the parameters for creating entities.
     constructor(level) {
         this.level = level;
+        this.createInitialEnemies();
+        this.createGems();
+        this.createPlayer();
+    }
+
+    // Creates the enemies that are present when the level loads
+    // Always create at least one enemy
+    // and possibly up to one more per row
+    createInitialEnemies() {
         this.enemies = [];
-         // always create at least one enemy
-         // and possibly up to one more per row
         this.checkEnemyCreation(1000);
         for (let i = 0; i < this.level.numEnemyRows - 1; ++i) this.checkEnemyCreation(2);
+    }
+
+    // Creates the gems for this level
+    // Asks the level for the gem locations (which are randomly determined)
+    // and then makes gem entities according to those locations
+    createGems() {
         this.gems = [];
         const gemLocations = this.level.getGemLocations();
         gemLocations.forEach(gemLocation => this.gems.push(new Gem(gemLocation)));
-        this.player = new Player(this.level.start, this.level);
+    }
+
+    // Creates the player for the level. Simple, but keeps the constructor code at the same level of abstraction
+    createPlayer() {
+        this.player = new Player(this.level);
     }
 
     // Returns an object containing boolean properties:
-    //  -collisionOccurred: true if player collided with an enemy, false otherwise
+    //  -hitEnemy: true if player collided with an enemy, false otherwise
+    //  -pickedUpGem: true if player picked up a gem (and didn't hit an enemy), false otherwise
     //  -levelWon: true if player is in the win zone, false otherwise
     update(dt) {
         this.checkEnemyCreation(dt);
@@ -109,10 +138,11 @@ class Entities {
         return {hitEnemy: hitEnemy, pickedUpGem: pickedUpGem, levelWon: levelWon};
     }
 
+    // Checks for creation of enemies
+    // Rate of enemy creation and speed are dependent on the level settings
     checkEnemyCreation(dt) {
-        const ENEMY_CREATION_CHANCE = 0.2;
         if (Math.random() < dt * this.level.enemyFrequency * this.level.stoneRows) {
-            // don't create enemies in top or bottom rows
+            // only create enemies in stone rows
             const row = Math.floor(Math.random() * this.level.stoneRows + this.level.waterRows);
             const speed = Math.floor(Math.random() * (this.level.enemyMaxSpeed - this.level.enemyMinSpeed) + this.level.enemyMinSpeed);
             // place enemies at either the left or right edge of screen
@@ -126,8 +156,12 @@ class Entities {
         }
     }
 
+    // Checks whether enemies should be removed from the list because they have moved off the edge of the screen
+    // If this didn't happen the array of enemies could become very large over time
+    // and collision checking would slow down the game
     checkEnemyRemoval() {
         let toBeRemoved = -1;
+        // In summary: go through all enemiee until we find one to be removed, remove it, then repeat the process
         do {
             toBeRemoved = -1;
             for (let enemyIndex = 0; enemyIndex < this.enemies.length; enemyIndex++) {
