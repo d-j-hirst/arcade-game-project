@@ -30,13 +30,20 @@ class Engine {
         document.addEventListener('mousemove', e => that.handleMouseMove(e));
     }
 
-    reset(resetScore) {
-        this.level = new Level();
+    reset(fullReset) {
+        if (fullReset) {
+            this.score = 0;
+            this.levelNum = 1;
+        } else {
+            this.levelNum++;
+        }
+        if (this.levelNum == 1) this.level = new Level1();
+        else if (this.levelNum == 2) this.level = new Level2();
+        else this.level = new Level3();
         this.entities = new Entities(this.level);
         this.inputHandler = new InputHandler(this.entities);
         this.lastTime = 0;
         this.buttonHighlight = false;
-        if (resetScore) this.score = 0;
         this.state = this.states.initialising;
         this.prepareResources();
         this.setupCanvas();
