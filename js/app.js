@@ -1,142 +1,10 @@
-class Level {
-    constructor () {
-        this.tileWidth = 101;
-        this.tileHeight = 83;
-        this.widthTiles = 5;
-        this.heightTiles = 6;
-        this.minEnemyRow = 1;
-        this.start = {x: this.tileWidth * 2, y: this.tileHeight * 5};
-    }
 
-    generateTiles() {
-    }
-
-    getGemLocations() {
-    }
-
-    getTile(row, col) {
-        return this.tiles[row * this.widthTiles + col];
-    }
-
-    widthPixels() {
-        return this.tileWidth * this.widthTiles;
-    }
-
-    heightPixels() {
-        return this.tileHeight * this.heightTiles;
-    }
-}
-
-class Level1 extends Level {
-    constructor () {
-        super();
-        this.start = {x: this.tileWidth * 2, y: this.tileHeight * 5};
-        this.heightTiles = 6;
-        this.numEnemyRows = 3;
-        this.generateTiles();
-    }
-
-    generateTiles() {
-        this.tiles = [];
-        for (let column = 0; column < this.widthTiles; column++) {
-            this.tiles.push('images/water-block.png');
-        }
-        for (let row = 0; row < 3; row++) {
-            for (let column = 0; column < this.widthTiles; column++) {
-                this.tiles.push('images/stone-block.png');
-            }
-        }
-        for (let row = 0; row < 2; row++) {
-            for (let column = 0; column < this.widthTiles; column++) {
-                this.tiles.push('images/grass-block.png');
-            }
-        }
-    }
-
-    getGemLocations() {
-        const gemLocations = [];
-        gemLocations.push({x: this.tileWidth * 3, y: this.tileHeight * 1});
-        gemLocations.push({x: this.tileWidth * 1, y: this.tileHeight * 2});
-        gemLocations.push({x: this.tileWidth * 4, y: this.tileHeight * 3});
-        return gemLocations;
-    }
-}
-
-class Level2 extends Level {
-    constructor () {
-        super();
-        this.heightTiles = 8;
-        this.numEnemyRows = 5;
-        this.start = {x: this.tileWidth * 2, y: this.tileHeight * 7};
-        this.generateTiles();
-    }
-
-    generateTiles() {
-        this.tiles = [];
-        for (let column = 0; column < this.widthTiles; column++) {
-            this.tiles.push('images/water-block.png');
-        }
-        for (let row = 0; row < 5; row++) {
-            for (let column = 0; column < this.widthTiles; column++) {
-                this.tiles.push('images/stone-block.png');
-            }
-        }
-        for (let row = 0; row < 2; row++) {
-            for (let column = 0; column < this.widthTiles; column++) {
-                this.tiles.push('images/grass-block.png');
-            }
-        }
-    }
-
-    getGemLocations() {
-        const gemLocations = [];
-        gemLocations.push({x: this.tileWidth * 3, y: this.tileHeight * 1});
-        gemLocations.push({x: this.tileWidth * 1, y: this.tileHeight * 2});
-        gemLocations.push({x: this.tileWidth * 4, y: this.tileHeight * 3});
-        return gemLocations;
-    }
-}
-
-class Level3 extends Level {
-    constructor () {
-        super();
-        this.heightTiles = 10;
-        this.numEnemyRows = 7;
-        this.start = {x: this.tileWidth * 2, y: this.tileHeight * 9};
-        this.generateTiles();
-    }
-
-    generateTiles() {
-        this.tiles = [];
-        for (let column = 0; column < this.widthTiles; column++) {
-            this.tiles.push('images/water-block.png');
-        }
-        for (let row = 0; row < 7; row++) {
-            for (let column = 0; column < this.widthTiles; column++) {
-                this.tiles.push('images/stone-block.png');
-            }
-        }
-        for (let row = 0; row < 2; row++) {
-            for (let column = 0; column < this.widthTiles; column++) {
-                this.tiles.push('images/grass-block.png');
-            }
-        }
-    }
-
-    getGemLocations() {
-        const gemLocations = [];
-        gemLocations.push({x: this.tileWidth * 3, y: this.tileHeight * 1});
-        gemLocations.push({x: this.tileWidth * 1, y: this.tileHeight * 2});
-        gemLocations.push({x: this.tileWidth * 4, y: this.tileHeight * 3});
-        return gemLocations;
-    }
-}
 
 // Base class for any object (including enemies, player(s), other interactives)
 // that are drawn onto a position on the screen
 class Entity {
     constructor(pos = {x: 0, y: 0}) {
-        this.pos = pos;
+        this.pos = Object.assign({}, pos);
         this.sprite = '';
     }
 
@@ -242,17 +110,18 @@ class Entities {
     }
 
     checkEnemyCreation(dt) {
-        const ENEMY_CREATION_CHANCE = 0.5;
-        if (Math.random() < dt * ENEMY_CREATION_CHANCE) {
+        const ENEMY_CREATION_CHANCE = 0.2;
+        if (Math.random() < dt * this.level.enemyFrequency * this.level.stoneRows) {
             // don't create enemies in top or bottom rows
-            const row = Math.floor(Math.random() * this.level.numEnemyRows + this.level.minEnemyRow);
+            const row = Math.floor(Math.random() * this.level.stoneRows + this.level.waterRows);
+            const speed = Math.floor(Math.random() * (this.level.enemyMaxSpeed - this.level.enemyMinSpeed) + this.level.enemyMinSpeed);
             // place enemies at either the left or right edge of screen
             // and set their movement to travel to the other side
             if (Math.random() < 0.5) {
-                this.enemies.push(new Enemy({x: -this.level.tileWidth, y: row * this.level.tileHeight}, {x: 100, y: 0}));
+                this.enemies.push(new Enemy({x: -this.level.tileWidth, y: row * this.level.tileHeight}, {x: speed, y: 0}));
             } else {
                 this.enemies.push(new Enemy({x: this.level.widthPixels() + this.level.tileWidth, y: row * this.level.tileHeight},
-                 {x: -100, y: 0}));
+                 {x: -speed, y: 0}));
             }
         }
     }
@@ -317,7 +186,7 @@ class InputHandler {
             39: 'right',
             40: 'down'
         };
-        this.inputsEnabled = true;
+        this.inputsEnabled = false;
         this.initializeEventListeners();
     }
 

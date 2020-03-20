@@ -1,11 +1,11 @@
-
 // The Engine class (significantly changed from the original files)
 // handles the underlying procedure of game operation while leaving specific behaviour
-// (such as rendering, user control and entity interactions) are left to the app script
+// (such as game object rendering, user control and entity interactions) are left to the app script
 // to define, allowing for proper separation of concerns.
 class Engine {
     constructor() {
         this.initialiseConstants();
+        this.levels = new Levels();
         this.reset(true);
     }
 
@@ -31,20 +31,18 @@ class Engine {
     }
 
     reset(fullReset) {
+        this.state = this.states.initialising;
         if (fullReset) {
             this.score = 0;
-            this.levelNum = 1;
+            this.level = this.levels.reset();
         } else {
-            this.levelNum++;
+            this.level = this.levels.next();
         }
-        if (this.levelNum == 1) this.level = new Level1();
-        else if (this.levelNum == 2) this.level = new Level2();
-        else this.level = new Level3();
         this.entities = new Entities(this.level);
         this.inputHandler = new InputHandler(this.entities);
         this.lastTime = 0;
+        this.timeSinceReset = 0;
         this.buttonHighlight = false;
-        this.state = this.states.initialising;
         this.prepareResources();
         this.setupCanvas();
     }
@@ -82,7 +80,6 @@ class Engine {
 
     run() {
         this.state = this.states.running;
-        this.inputHandler.inputsEnabled = true;
         this.initialiseLevel();
         this.runLoopIteration();
     }
@@ -121,10 +118,21 @@ class Engine {
         return dt;
     }
 
+    playerInputAllowed() {
+        return this.timeSinceReset > 2;
+    }
+
+    playerVisible() {
+        const blinkState = Math.floor(this.timeSinceReset * 4 % 2) == 0;
+        return this.state != this.states.running || blinkState || this.playerInputAllowed();
+    }
+
     // Function for collective handling the updating of the game state
     // (in particular, movement and iteraction of entities)
     update(dt) {
+        this.timeSinceReset += dt;
         if (this.state != this.states.running) return;
+        if (this.playerInputAllowed()) this.inputHandler.inputsEnabled = true;
         const entityMessages = this.entities.update(dt);
         if (entityMessages.hitEnemy) {
             this.inputHandler.inputsEnabled = false;
@@ -162,7 +170,7 @@ class Engine {
     // Draws the entities for the current game level
     renderEntities() {
         this.entities.gems.forEach(gem => gem.render());
-        this.entities.player.render();
+        if (this.playerVisible()) this.entities.player.render();
         this.entities.enemies.forEach(enemy => enemy.render());
     }
 
